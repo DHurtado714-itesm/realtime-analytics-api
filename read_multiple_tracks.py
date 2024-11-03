@@ -2,7 +2,7 @@ import requests
 import time
 
 # API URL for retrieving stats
-url = "http://localhost:8000/stats"
+url = "http://localhost:80/stats"
 
 
 def get_stats():
@@ -39,7 +39,7 @@ def get_stats():
 response_times = []
 
 # Number of continuous reads
-num_requests = 5000  # You can adjust this to control how long the script runs
+num_requests = 50000 # You can adjust this to control how long the script runs
 
 for _ in range(num_requests):
     # Send the request and store the response time

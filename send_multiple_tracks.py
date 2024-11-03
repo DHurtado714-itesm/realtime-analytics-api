@@ -3,7 +3,7 @@ import time
 import random
 
 # API URL
-url = "http://localhost:8000/track"
+url = "http://localhost:80/track"
 
 # Sample data for page views
 page_ids = ["home", "about", "contact", "blog", "pricing"]
@@ -45,7 +45,7 @@ def send_track_request(page_id, user_id):
 response_times = []
 
 # Send multiple requests
-for _ in range(5000):  # Send 50 requests as an example
+for _ in range(50000):  # Send 50 requests as an example
     page_id = random.choice(page_ids)
     user_id = random.choice(user_ids)
 

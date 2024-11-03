@@ -1,14 +1,12 @@
-### README.md
+# Real-Time Analytics API with FastAPI, MongoDB, Redis, and NGINX
 
-# Real-Time Analytics API with FastAPI, MongoDB, and Redis
-
-This project is a real-time analytics API built using **FastAPI** for handling requests, **MongoDB** for storing page view data, and **Redis** for caching data to improve performance. The API allows tracking of page views (`POST /track`) and retrieval of aggregated statistics (`GET /stats`).
+This project is a real-time analytics API built using **FastAPI** for handling requests, **MongoDB** for storing page view data, and **Redis** for caching data to improve performance. NGINX is used as a load balancer to distribute requests across multiple FastAPI instances, enabling horizontal scaling and improved handling of high request volumes.
 
 ## Features
 
 - **Track Page Views**: Records each page view along with a unique user ID.
-- **Retrieve Analytics**: Provides real-time analytics data such as the total number of views and unique visitors.
-- **High Performance**: Uses Redis caching to reduce response times for high-frequency data retrieval.
+- **Retrieve Analytics**: Provides real-time analytics data, such as the total number of views and unique visitors.
+- **High Performance and Scalability**: Uses Redis caching to reduce response times for frequent data retrieval and NGINX for load balancing across multiple FastAPI instances.
 
 ## Performance Metrics
 
@@ -39,7 +37,8 @@ These metrics are based on simulated multiple requests using the included script
    - `models.py` (data models)
    - `views.py` (API endpoints)
    - `Dockerfile` (FastAPI Docker setup)
-   - `docker-compose.yml` (Docker setup for FastAPI, MongoDB, and Redis)
+   - `docker-compose.yml` (Docker setup for FastAPI, MongoDB, Redis, and NGINX)
+   - `nginx.conf` (NGINX configuration for load balancing)
 
 3. Create a `requirements.txt` with the following dependencies:
 
@@ -59,11 +58,11 @@ These metrics are based on simulated multiple requests using the included script
    docker-compose up --build
    ```
 
-   This command starts the FastAPI application, MongoDB, and Redis.
+   This command starts the FastAPI application with multiple replicas, MongoDB, Redis, and NGINX for load balancing.
 
 2. **Access the API**:
 
-   - FastAPI documentation is available at [http://localhost:8000/docs](http://localhost:8000/docs).
+   - FastAPI documentation is available at [http://localhost/docs](http://localhost/docs) (proxied by NGINX).
    - Endpoints:
      - `POST /track` - Track page views
      - `GET /stats` - Retrieve real-time analytics
@@ -75,7 +74,7 @@ These metrics are based on simulated multiple requests using the included script
 1. **Track Page View**: Sends a `POST` request to log a page view for a specific page and user.
 
    ```http
-   POST http://localhost:8000/track
+   POST http://localhost/track
    Content-Type: application/json
 
    {
@@ -87,7 +86,7 @@ These metrics are based on simulated multiple requests using the included script
 2. **Retrieve Stats**: Sends a `GET` request to fetch real-time analytics data.
 
    ```http
-   GET http://localhost:8000/stats
+   GET http://localhost/stats
    Content-Type: application/json
    ```
 
@@ -97,7 +96,7 @@ These metrics are based on simulated multiple requests using the included script
 
 Simulates multiple `POST /track` requests to track page views from different users on various pages.
 
-```python
+```bash
 python send_multiple_tracks.py
 ```
 
@@ -105,7 +104,7 @@ python send_multiple_tracks.py
 
 Simulates multiple `GET /stats` requests to repeatedly retrieve real-time analytics data.
 
-```python
+```bash
 python read_multiple_tracks.py
 ```
 
@@ -115,13 +114,14 @@ Both scripts log response times for each request and provide an average response
 
 ```plaintext
 real-time-analytics/
-├── main.py            # Main FastAPI application
-├── config.py          # Redis client configuration
-├── database.py        # MongoDB connection setup
-├── models.py          # Data models for MongoDB
-├── views.py           # API endpoints
-├── Dockerfile         # Dockerfile for FastAPI app
-├── docker-compose.yml # Docker Compose setup
+├── main.py               # Main FastAPI application
+├── config.py             # Redis client configuration
+├── database.py           # MongoDB connection setup
+├── models.py             # Data models for MongoDB
+├── views.py              # API endpoints
+├── Dockerfile            # Dockerfile for FastAPI app
+├── docker-compose.yml    # Docker Compose setup
+├── nginx.conf            # NGINX configuration for load balancing
 ├── send_multiple_tracks.py  # Script for multiple write requests
 └── read_multiple_tracks.py  # Script for multiple read requests
 ```
@@ -133,5 +133,36 @@ real-time-analytics/
 
 The average response times for reading and writing operations are approximately:
 
-- **Read Average Response Time**: ~0.0048 seconds
-- **Write Average Response Time**: ~0.0050 seconds
+- **Read Average Response Time**: ~0.0080 seconds
+- **Write Average Response Time**: ~0.0079 seconds
+
+## NGINX Load Balancing
+
+This setup includes NGINX as a load balancer, configured in `nginx.conf`. The load balancer distributes incoming requests across multiple FastAPI instances, which improves scalability and enables the system to handle higher traffic.
+
+NGINX configuration file (`nginx.conf`):
+
+```nginx
+events { }
+
+http {
+    upstream fastapi_app {
+        # Load-balancing setup for FastAPI instances
+        server app:8000;
+        server app:8000;
+        server app:8000;
+    }
+
+    server {
+        listen 80;
+
+        location / {
+            proxy_pass http://fastapi_app;
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_set_header X-Forwarded-Proto $scheme;
+        }
+    }
+}
+```
