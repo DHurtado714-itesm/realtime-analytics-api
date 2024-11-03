@@ -1,0 +1,27 @@
+### Track Page View
+POST http://localhost:8000/track
+Content-Type: application/json
+
+{
+  "page_id": "home",
+  "user_id": "user123"
+}
+
+###
+
+### Track Another Page View
+POST http://localhost:8000/track
+Content-Type: application/json
+
+{
+  "page_id": "about",
+  "user_id": "user456"
+}
+
+###
+
+### Retrieve Stats
+GET http://localhost:8000/stats
+Content-Type: application/json
+
+###
